@@ -20,7 +20,10 @@ Param
     $OnlyDown,
 
     [switch]
-    $OnlyUp
+    $OnlyUp, 
+
+    [switch]
+    $Quiet
 
 )
 
@@ -109,7 +112,6 @@ Foreach($MonitorConfigFile in $MonitorConfigFiles) {
             }
         }
 
-
         # If no Monitor_Name, we likely have a blank line. Skip
         If(-not($Monitor_Name)) { Continue }
 
@@ -159,7 +161,6 @@ Foreach($MonitorConfigFile in $MonitorConfigFiles) {
             Continue
         }
 
-
         # If -OnlyDown parameter specified, only run script if previous status is not OK
         # Thus if previous state is INIT or OK, skip
         If($OnlyDown) {
@@ -172,13 +173,17 @@ Foreach($MonitorConfigFile in $MonitorConfigFiles) {
             If($PreviousStatus -ne "OK") { Continue }
         }
 
-
         # We want to pass an object via the pipeline to a test script
         # Build TestProperties hashtable to hold all the properties
         $TestProperties=@{}
 
         # Add the Target (required parameter)
         $TestProperties.Add("Target",$ThingToMonitor.Target)
+
+        # If -Quiet passed, add parameter
+        If($Quiet) {
+            $TestProperties.Add("Quiet",$True)
+        }
 
         # For each provided Test parameter, add that as well
         If($Test_Params) {
@@ -223,7 +228,7 @@ Foreach($MonitorConfigFile in $MonitorConfigFiles) {
      
         # Add Thing to arraylist
         $ThingsToMonitor.Add($ThingToMonitor)|Out-Null
-
-
     }
 }
+
+$ThingsToMonitor
