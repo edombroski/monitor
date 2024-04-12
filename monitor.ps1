@@ -23,7 +23,11 @@ Param
     $OnlyUp, 
 
     [switch]
-    $Quiet
+    $Quiet, 
+
+    [string]
+    $GroupBy="Test_Script"
+
 
 )
 
@@ -188,6 +192,10 @@ Foreach($MonitorConfigFile in $MonitorConfigFiles) {
             If($PreviousStatus -ne "OK") { Continue }
         }
 
+        # Build a Category+Test value so we can group by that combination for later MP purposes
+        $CategoryTest=($Category+"|"+$ThingToMonitor.Test_Script).Replace(" ","").ToLower()
+
+
         # We want to pass an object via the pipeline to a test script
         # Build TestProperties hashtable to hold all the properties
         $TestProperties=@{}
@@ -246,8 +254,8 @@ Foreach($MonitorConfigFile in $MonitorConfigFiles) {
     }
 }
 
-# Group objects by test
-$ThingsToMonitorGroup = $ThingsToMonitor|Group-Object "Test_Script"
+# Group things by given parameter, primarily for for MPMode
+$ThingsToMonitorGroup = $ThingsToMonitor|Group-Object $GroupBy
 
 
 #######################################################################################
@@ -257,7 +265,12 @@ $TestStartTime=Get-Date
 Foreach($ThingToMonitorGroup in $ThingsToMonitorGroup ) {
 
     # Get test from group name
-    $Test = $ThingToMonitorGroup.Name
+    If($GroupBy = "Test_Script") {
+        $Test = $ThingToMonitorGroup.Name
+    }
+    ElseIf($GroupBy = "Category+Test") {
+        $Category, $Test = $ThingToMonitorGroup.Name.Split("|")
+    }
 
     # Get test script path from hash
     If($Tests[$Test]) {
