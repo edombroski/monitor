@@ -148,6 +148,17 @@ Foreach($MonitorConfigFile in $MonitorConfigFiles) {
             $StatusObject|Export-CLIXML $StatusFile
         }
 
+        # If Maintenance Mode option set for this test, set that as status then skip
+        If($MaintenanceMode) {
+            If($PreviousStatus -ne "MAINT") {
+                $StatusObject = [pscustomobject]@{
+                    "Status"="MAINT"
+                }
+                $StatusObject|Export-CLIXML $StatusFile
+            }
+            Continue
+        }
+
         # We want to pass an object via the pipeline to a test script
         # Build TestProperties hashtable to hold all the properties
         $TestProperties=@{}
