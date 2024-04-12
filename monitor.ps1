@@ -159,6 +159,20 @@ Foreach($MonitorConfigFile in $MonitorConfigFiles) {
             Continue
         }
 
+
+        # If -OnlyDown parameter specified, only run script if previous status is not OK
+        # Thus if previous state is INIT or OK, skip
+        If($OnlyDown) {
+            If($PreviousStatus -in @("OK","INIT")) { Continue }
+        }
+
+        # If -OnlyUp parameter specified, only run script if previous status is not OK
+        # Thus if previous state !OK, skip
+        If($OnlyUp) {
+            If($PreviousStatus -ne "OK") { Continue }
+        }
+
+
         # We want to pass an object via the pipeline to a test script
         # Build TestProperties hashtable to hold all the properties
         $TestProperties=@{}
