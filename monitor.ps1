@@ -371,9 +371,6 @@ Foreach($ThingToMonitorGroup in $ThingsToMonitorGroup ) {
     }
 
 }
-$TestEndTime=Get-Date
-
-
 If($MPMode) {
         
     # Get results
@@ -386,11 +383,100 @@ If($MPMode) {
     }
    
 }
-
+$TestEndTime=Get-Date
 
 $ResultsCount = ($Results|Measure).Count
 
-$Results
+
+Foreach($Result in $Results) {
+    $CurrentStatus  = $Result.CurrentStatus
+    $PreviousStatus = $Result.PreviousStatus
+    $AlwaysInvokeAction = $Result.AlwaysInvokeAction
+    $RunActionScript = $False
+
+    ##################################################################
+    #  NOTICE: One time alert, run action but set status=OK
+    ##################################################################
+    If($CurrentStatus -eq "NOTICE") {
+        Write-Host "NOTICE:`tMonitor=$($Result.Monitor_Name), Target=$($Result.Target), Test=$($Result.Test_Script)"
+        Write-Host "STATUS MESSAGE:`t$($Result.Message)"
+        $StatusObject = [pscustomobject]@{
+            "Status"="OK"
+        }
+        $StatusObject | Export-CLIXML $Result.StatusFile
+        $RunActionScript=$True        
+    }
+
+
+    ##################################################################
+    #  STATUS CHANGE: Store current status
+    ##################################################################
+    ElseIf($CurrentStatus -ne $PreviousStatus) {
+
+        Write-Host "STATUS CHANGE:`tMonitor=$($Result.Monitor_Name), Target=$($Result.Target), Test=$($Result.Test_Script), Change=[$($PreviousStatus) -> $($CurrentStatus)]"
+        If($Result.Message) {
+            Write-Host "STATUS MESSAGE:`t$($Result.Message)"
+        }
+        $StatusObject = @{
+            "Status"=$CurrentStatus
+        }
+
+        $StatusObject | Export-CLIXML $Result.StatusFile
+
+        ##################################################################
+        #  Previous status was INIT, don't run action
+        ##################################################################
+        If($PreviousStatus -eq "INIT") { 
+            Write-Host "ACTION TAKEN: None (Previous state INIT)"
+            Continue 
+        }
+
+        ##################################################################
+        #  Previously in maintenance mode, now OK, don't run action
+        ##################################################################
+        ElseIf($PreviousStatus -eq "MAINT" -and $CurrentStatus -eq "OK") { 
+            Write-Host "ACTION TAKEN: None (Previous Status=MAINT, Current Status=OK)"
+            Continue 
+        }
+
+
+        ##################################################################
+        #  Previously OK or now OK, run action
+        ##################################################################
+        ElseIf($CurrentStatus -eq "OK" -or $PreviousStatus -eq "OK") {
+            $RunActionScript=$True
+        }
+    }
+
+
+    ##################################################################
+    #  Not OK but AlwaysInvokeAction is set, run action
+    ##################################################################
+    ElseIf($CurrentStatus -ne "OK" -and $AlwaysInvokeAction) {
+        Write-Host "STATUS UPDATE:`tMonitor=$($Result.Monitor_Name), Target=$($Result.Target), Test=$($Result.Test_Script)"
+        Write-Host "STATUS MESSAGE:`t$($Result.Message)"
+        If($Result.Action_Script) {
+            Write-Host "ACTION TAKEN: $($Result.Action_Script) (Previous Status=$($PreviousStatus), Current Status=$($CurrentStatus), ALWAYS_INVOKE_ACTION=True)"
+        }
+        Else {
+            Write-Host "ACTION TAKEN: None (ALWAYS_INVOKE_ACTION=True but no Action_Script defined)"
+        }
+    }
+
+
+    ###############################################################################################################################
+    # RUN ACTIONS
+    ###############################################################################################################################
+    If($RunActionScript) {
+        If($Result.Action_Script) {
+            Write-Host "ACTION TAKEN: $($Result.Action_Script)"
+        }
+        Else {
+            Write-Host "ACTION TAKEN: None (No Action_Script defined)"
+        }
+    } 
+}
+
 
 
 $EndTime = Get-Date
