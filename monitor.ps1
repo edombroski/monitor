@@ -25,6 +25,9 @@ Param
     [switch]
     $Quiet, 
 
+    [switch]
+    $MPMode, 
+
     [string]
     $GroupBy="Test_Script"
 
@@ -344,14 +347,46 @@ Foreach($ThingToMonitorGroup in $ThingsToMonitorGroup ) {
         $TestPropertyObjects.Add([pscustomobject]$ThingToMonitor.Test_Script_Properties)|Out-Null
     }
 
-    # Get test results from script block
-    $TestResults = $TestPropertyObjects | &$TestScriptBlock
+    If($MPMode) {
+        $TestPropertyObjects.Insert(0, $TestScriptBlock)|Out-Null
 
-    # Add to main results
-    $Results.AddRange($TestResults)
+        # Invoke Background Job
+        Try {
+            Write-Host -NoNewLine "Starting job..."
+            $Jobs+=Start-Job -ScriptBlock $TestScriptBlockWrapper -ArgumentList (,$TestPropertyObjects)
+            Write-Host "Done."
+        }
+        Catch {
+            Write-Host "Failed."
+            Write-Host "Error creating job"
+        }
+
+    }
+    Else {
+        # Get test results from script block
+        $TestResults = $TestPropertyObjects | &$TestScriptBlock
+
+        # Add to main results
+        $Results.AddRange($TestResults)
+    }
 
 }
 $TestEndTime=Get-Date
+
+
+If($MPMode) {
+        
+    # Get results
+    If($Jobs) {
+        # Get all results
+        $Results = $Jobs|Get-Job|Wait-Job|Receive-Job
+
+        # Clean up jobs
+        $Jobs|Remove-Job
+    }
+   
+}
+
 
 $ResultsCount = ($Results|Measure).Count
 
