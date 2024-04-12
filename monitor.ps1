@@ -477,7 +477,8 @@ Foreach($Result in $Results) {
     } 
 }
 
-
+# Write last run file
+(Get-Date).ToString()|Out-File -Encoding ASCII $LastRunFile
 
 $EndTime = Get-Date
 $TestSeconds = ($TestEndTime - $TestStartTime).TotalSeconds
@@ -485,3 +486,5 @@ $TotalSeconds = ($EndTime - $StartTime).TotalSeconds
 Write-Host "Performed $ResultsCount monitor tests"
 Write-Host "Tests execution time: $($TestSeconds) seconds"
 Write-Host "Total execution time: $($TotalSeconds) seconds"
+
+
