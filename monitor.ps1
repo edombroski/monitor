@@ -254,13 +254,21 @@ Foreach($MonitorConfigFile in $MonitorConfigFiles) {
     }
 }
 
-# Group things by given parameter, primarily for for MPMode
+
+
+
+####################################################################################################
+# RUN TESTS
+####################################################################################################
+# We want to have standalone .ps1 scripts that can perform a test and produce a result all by itself
+# For each thing to monitor, we could call the .ps1 script directly, but that seems inefficient
+# Instead, group all the things to monitor by test (or, further, by category)
+# Then we can pipe all the configurations for things to monitor in the script
+# Thus the BEGIN section of the .ps1 is only invoked once
+####################################################################################################
+# Group things by given parameter
 $ThingsToMonitorGroup = $ThingsToMonitor|Group-Object $GroupBy
 
-
-#######################################################################################
-# RUN TESTS
-#######################################################################################
 $TestStartTime=Get-Date
 Foreach($ThingToMonitorGroup in $ThingsToMonitorGroup ) {
 
