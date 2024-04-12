@@ -33,6 +33,9 @@ $StartTime = Get-Date
 # Load script config (for file location, etc.)
 . "$($psscriptroot)\config.ps1"
 
+# Load functions
+. "$($psscriptroot)\functions.ps1"
+
 # Get contents of all the test scripts into a hashtable by test
 $Tests=@{}
 $TestScriptFiles = Get-ChildItem $TestScriptLocation
