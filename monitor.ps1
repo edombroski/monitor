@@ -231,4 +231,28 @@ Foreach($MonitorConfigFile in $MonitorConfigFiles) {
     }
 }
 
-$ThingsToMonitor
+# Group objects by test
+$ThingsToMonitorGroup = $ThingsToMonitor|Group-Object "Test_Script"
+
+Foreach($ThingToMonitorGroup in $ThingsToMonitorGroup ) {
+
+    $Test = $ThingToMonitorGroup.Name
+
+    # Get test script path from hash
+    If($Tests[$Test]) {
+        $TestScriptBlock  = $Tests[$Test]
+    }
+    Else {
+        Write-Host "No test script for test ""$($Test)"""
+        Continue
+    }
+
+    # Build parameters objects to pass to test scripts
+    $TestPropertyObjects = New-Object System.Collections.ArrayList
+
+    Foreach($ThingToMonitor in $ThingToMonitorGroup.Group) {
+        $ThingToMonitor.Test_Script_Properties.Add("MonitorObject",$ThingToMonitor)
+        $TestPropertyObjects.Add([pscustomobject]$ThingToMonitor.Test_Script_Properties)|Out-Null
+    }
+
+}
