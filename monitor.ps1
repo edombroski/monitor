@@ -45,8 +45,11 @@ Foreach($TestScript in $TestScriptFiles) {
 # Get monitor configuration .csv files
 $MonitorConfigFiles = Get-ChildItem $MonitorConfigFilesLocation
 
-# Create arraylist for ThingsToMonitor
+# Create arraylist for .csv configurations
 $ThingsToMonitor = New-Object System.Collections.ArrayList
+
+# Create arraylist to hold results
+$Results         = New-Object System.Collections.ArrayList
 
 # Go through config files to look for things to monitor
 Foreach($MonitorConfigFile in $MonitorConfigFiles) {
@@ -243,8 +246,14 @@ Foreach($MonitorConfigFile in $MonitorConfigFiles) {
 # Group objects by test
 $ThingsToMonitorGroup = $ThingsToMonitor|Group-Object "Test_Script"
 
+
+#######################################################################################
+# RUN TESTS
+#######################################################################################
+$TestStartTime=Get-Date
 Foreach($ThingToMonitorGroup in $ThingsToMonitorGroup ) {
 
+    # Get test from group name
     $Test = $ThingToMonitorGroup.Name
 
     # Get test script path from hash
@@ -258,10 +267,28 @@ Foreach($ThingToMonitorGroup in $ThingsToMonitorGroup ) {
 
     # Build parameters objects to pass to test scripts
     $TestPropertyObjects = New-Object System.Collections.ArrayList
-
     Foreach($ThingToMonitor in $ThingToMonitorGroup.Group) {
         $ThingToMonitor.Test_Script_Properties.Add("MonitorObject",$ThingToMonitor)
         $TestPropertyObjects.Add([pscustomobject]$ThingToMonitor.Test_Script_Properties)|Out-Null
     }
 
+    # Get test results from script block
+    $TestResults = $TestPropertyObjects | &$TestScriptBlock
+
+    # Add to main results
+    $Results.AddRange($TestResults)
+
 }
+$TestEndTime=Get-Date
+
+$ResultsCount = ($Results|Measure).Count
+
+$Results
+
+
+$EndTime = Get-Date
+$TestSeconds = ($TestEndTime - $TestStartTime).TotalSeconds
+$TotalSeconds = ($EndTime - $StartTime).TotalSeconds
+Write-Host "Performed $ResultsCount monitor tests"
+Write-Host "Tests execution time: $($TestSeconds) seconds"
+Write-Host "Total execution time: $($TotalSeconds) seconds"
