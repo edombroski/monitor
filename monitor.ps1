@@ -122,5 +122,56 @@ Foreach($MonitorConfigFile in $MonitorConfigFiles) {
             }
             $StatusObject|Export-CLIXML $StatusFile
         }
+
+        # We want to pass an object via the pipeline to a test script
+        # Build TestProperties hashtable to hold all the properties
+        $TestProperties=@{}
+
+        # Add the Target (required parameter)
+        $TestProperties.Add("Target",$ThingToMonitor.Target)
+
+        # For each provided Test parameter, add that as well
+        If($Test_Params) {
+            $Test_Params = $Test_Params.Split(",")
+            Foreach($Test_Param in $Test_Params) {
+                $Test_Param_Name, $Test_Param_Value = $Test_Param.Split("=")
+                
+                # Special case for booleans for switches
+                If($Test_Param_Value -eq "True") {
+                    Write-Verbose "Test param value True"
+                    $TestProperties.Add($Test_Param_Name, $True)
+                }
+                ElseIf($Test_Param_Value -eq "False") {
+                    Write-Verbose "Test param value False"
+                    $TestProperties.Add($Test_Param_Name, $True)
+                }
+                Else {
+                    $TestProperties.Add($Test_Param_Name, $Test_Param_Value)
+                }
+            }
+        }
+
+        # Do the same for action scripts
+        $ActionProperties=@{}
+        If($ThingToMonitor.Action_Params) {
+            $Action_Params = $Action_Params.Split(",")
+            Foreach($Action_Param in $Action_Params) {
+                $Action_Param_Name, $Action_Param_Value = $Action_Param.Split("=")
+                $ActionProperties.Add($Action_Param_Name, $Action_Param_Value.Split(";"))
+            }
+        }
+
+        # Extend the CSV "Thing To Monitor" object with these properties
+        Add-Member -InputObject $ThingToMonitor -MemberType "NoteProperty" -Name "Test_Script_Properties" -Value $TestProperties
+        Add-Member -InputObject $ThingToMonitor -MemberType "NoteProperty" -Name "Action_Script_Properties" -Value $ActionProperties
+        Add-Member -InputObject $ThingToMonitor -MemberType "NoteProperty" -Name "Category" -Value $Category
+        Add-Member -InputObject $ThingToMonitor -MemberType "NoteProperty" -Name "PreviousStatus" -Value $PreviousStatus
+        Add-Member -InputObject $ThingToMonitor -MemberType "NoteProperty" -Name "DataDir" -Value $DataDir
+        Add-Member -InputObject $ThingToMonitor -MemberType "NoteProperty" -Name "StatusFile" -Value $StatusFile
+     
+        # Add Thing to arraylist
+        $ThingsToMonitor.Add($ThingToMonitor)|Out-Null
+
+
     }
 }
