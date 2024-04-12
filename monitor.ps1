@@ -33,6 +33,15 @@ $StartTime = Get-Date
 # Load script config (for file location, etc.)
 . "$($psscriptroot)\config.ps1"
 
+# Get contents of all the test scripts into a hashtable by test
+$Tests=@{}
+$TestScriptFiles = Get-ChildItem $TestScriptLocation
+Foreach($TestScript in $TestScriptFiles) {
+    $TestName = $TestScript.Name.Replace(".ps1","")
+    $TestContents = Get-Command $TestScript.FullName | Select -ExpandProperty ScriptBlock
+    $Tests.Add($TestName,$TestContents)
+}
+
 # Get monitor configuration .csv files
 $MonitorConfigFiles = Get-ChildItem $MonitorConfigFilesLocation
 
