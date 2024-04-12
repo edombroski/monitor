@@ -40,6 +40,54 @@ $StartTime = Get-Date
 # Load functions
 . "$($psscriptroot)\functions.ps1"
 
+####################################################################################################
+# MP Script Block Wrapper
+####################################################################################################
+# To perform the monitor tests, I pipe an array of parameter objects to a ScriptBlock
+#
+# The standard way of doing multi-processing in PowerShell is using Start-Job
+# While Start-Job takes a ScriptBlock as a parameter, it doesn't seem to take pipeline input to it.
+#
+# So, I use a "wrapper" ScriptBlock to do so
+#
+# I use one array of 'TestParameters' that is fed via -ArgumentList
+#
+# The first object in the array is the ScriptBlock I want the wrapper to invoke
+#
+# The rest of the objects are the parameter objects to that ScriptBlock
+#
+# I am led to believe I *should* be able provide one parameter a string representing the ScriptBlock,
+# and another array parameter (via the (,$ArrayName) syntax) containing the parameter objects
+#
+# This does seem to work when you do one or the other, but if both are provided it seems to flatten
+# the array into one object. So to get around this I use one array.
+#####################################################################################################
+$TestScriptBlockWrapper = {
+    Param([object[]]$TestParameters)
+
+    $NumberOfObjects = ($TestParameters|Measure).Count
+
+    # First parameter is the script block we want to run
+    Try {
+        $ScriptBlock = [scriptblock]::Create($TestParameters[0])
+    }
+    Catch {
+        Write-Host "Failed to create script block from file"
+        Return
+    }
+
+    # Rest of the parameters are the objects to pipe to it
+    Try {
+        $TestParameterObjects= $TestParameters[1..$($NumberOfObjects -1)]
+    }
+    Catch {
+        Write-Host "Can't get parameter objects."
+    }
+
+    $TestParameterObjects|&$ScriptBlock
+}
+
+
 # Get contents of all the test scripts into a hashtable by test
 $Tests=@{}
 $TestScriptFiles = Get-ChildItem $TestScriptLocation
@@ -257,15 +305,15 @@ Foreach($MonitorConfigFile in $MonitorConfigFiles) {
 
 
 
-####################################################################################################
+###############################################################################################################################
 # RUN TESTS
-####################################################################################################
-# We want to have standalone .ps1 scripts that can perform a test and produce a result all by itself
-# For each thing to monitor, we could call the .ps1 script directly, but that seems inefficient
-# Instead, group all the things to monitor by test (or, further, by category)
-# Then we can pipe all the configurations for things to monitor in the script
-# Thus the BEGIN section of the .ps1 is only invoked once
-####################################################################################################
+###############################################################################################################################
+# The primary idea of this script is to have standalone .ps1 scripts that can perform a test and produce a result all by itself
+# For each thing to monitor, I *could* call the .ps1 script with the given parameters, but that seems inefficient
+# Instead, I use Group-Object to group all the things to monitor by test (or, even further, by category)
+# Then I can pipe all the 'things to monitor' configurations for a given test into that script
+# Thus the BEGIN section of the the particular .ps1 is only invoked once for that test or test/category combination
+###############################################################################################################################
 # Group things by given parameter
 $ThingsToMonitorGroup = $ThingsToMonitor|Group-Object $GroupBy
 
