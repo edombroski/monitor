@@ -84,6 +84,31 @@ Foreach($MonitorConfigFile in $MonitorConfigFiles) {
         $MaintenanceMode        = $False
         $AlwaysInvokeAction     = $False
 
+        # Determine script options
+        If($Options) {
+            $MonitorOptions = $Options.Split(",")
+            Foreach($MonitorOption in $MonitorOptions) {
+                $MonitorOptionName, $MonitorOptionValue = $MonitorOption.Split("=")
+                Switch($MonitorOptionName)
+                {
+                    "MAINTENANCE_MODE" {
+                        $MaintenanceMode=[bool]$MonitorOptionValue
+                    }
+                    "REPEAT_ACTION_MINUTES"
+                    {
+                        $RepeatActionMinutes=$MonitorOptionValue
+                    }
+                    "ALWAYS_INVOKE_ACTION"
+                    {
+                        $AlwaysInvokeAction=[bool]$MonitorOptionValue
+                    }
+                    default {
+                        Write-Warning "Unrecognized option name $MonitorOptionName, skipping"
+                    }
+                }
+            }
+        }
+
 
         # If no Monitor_Name, we likely have a blank line. Skip
         If(-not($Monitor_Name)) { Continue }
@@ -168,6 +193,8 @@ Foreach($MonitorConfigFile in $MonitorConfigFiles) {
         Add-Member -InputObject $ThingToMonitor -MemberType "NoteProperty" -Name "PreviousStatus" -Value $PreviousStatus
         Add-Member -InputObject $ThingToMonitor -MemberType "NoteProperty" -Name "DataDir" -Value $DataDir
         Add-Member -InputObject $ThingToMonitor -MemberType "NoteProperty" -Name "StatusFile" -Value $StatusFile
+        Add-Member -InputObject $ThingToMonitor -MemberType "NoteProperty" -Name "MaintenanceMode" -Value $MaintenanceMode
+        Add-Member -InputObject $ThingToMonitor -MemberType "NoteProperty" -Name "AlwaysInvokeAction" -Value $AlwaysInvokeAction
      
         # Add Thing to arraylist
         $ThingsToMonitor.Add($ThingToMonitor)|Out-Null

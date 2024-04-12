@@ -6,3 +6,6 @@ $MonitorDataLocation            = "$($psscriptroot)\monitor_data"
 
 # Configurations for files
 $LastRunFile                    = "$($psscriptroot)\LastRun.txt"
+
+# Repeat Action Minutes
+$RepeatActionMinutes            = 12*60
