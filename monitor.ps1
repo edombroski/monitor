@@ -29,7 +29,13 @@ Param
     $MPMode, 
 
     [string]
-    $GroupBy="Test_Script"
+    $GroupBy="Test_Script", 
+
+    [int]
+    $MaxJobs=$env:NUMBER_OF_PROCESSORS+1,
+
+    [int]
+    $WaitMs=500
 
 
 )
@@ -294,6 +300,7 @@ Foreach($MonitorConfigFile in $MonitorConfigFiles) {
         Add-Member -InputObject $ThingToMonitor -MemberType "NoteProperty" -Name "Test_Script_Properties" -Value $TestProperties
         Add-Member -InputObject $ThingToMonitor -MemberType "NoteProperty" -Name "Action_Script_Properties" -Value $ActionProperties
         Add-Member -InputObject $ThingToMonitor -MemberType "NoteProperty" -Name "Category" -Value $Category
+        Add-Member -InputObject $ThingToMonitor -MemberType "NoteProperty" -Name "Category+Test" -Value $CategoryTest
         Add-Member -InputObject $ThingToMonitor -MemberType "NoteProperty" -Name "PreviousStatus" -Value $PreviousStatus
         Add-Member -InputObject $ThingToMonitor -MemberType "NoteProperty" -Name "DataDir" -Value $DataDir
         Add-Member -InputObject $ThingToMonitor -MemberType "NoteProperty" -Name "StatusFile" -Value $StatusFile
@@ -321,13 +328,18 @@ Foreach($MonitorConfigFile in $MonitorConfigFiles) {
 $ThingsToMonitorGroup = $ThingsToMonitor|Group-Object $GroupBy
 
 $TestStartTime=Get-Date
+If($MPMode) {
+    $Jobs=@()
+    Write-Host "MPMode: Group by attribute: $GroupBy"
+    Write-Host "MPMode: Results at end."
+}
 Foreach($ThingToMonitorGroup in $ThingsToMonitorGroup ) {
 
     # Get test from group name
-    If($GroupBy = "Test_Script") {
+    If($GroupBy -eq "Test_Script") {
         $Test = $ThingToMonitorGroup.Name
     }
-    ElseIf($GroupBy = "Category+Test") {
+    ElseIf($GroupBy -eq "Category+Test") {
         $Category, $Test = $ThingToMonitorGroup.Name.Split("|")
     }
 
@@ -349,6 +361,12 @@ Foreach($ThingToMonitorGroup in $ThingsToMonitorGroup ) {
 
     If($MPMode) {
         $TestPropertyObjects.Insert(0, $TestScriptBlock)|Out-Null
+
+        While( (Get-Job|?{$_.State -eq "Running"}|Measure).Count -ge $MaxJobs ) {
+            Write-Host "Max concurrent jobs exceeded...waiting."
+            Start-Sleep -Milliseconds $WaitMs
+        }
+
 
         # Invoke Background Job
         Try {
