@@ -63,13 +63,18 @@
     .PARAMETER MaxJobs
         Maximum total background jobs to run concurrently
 
+    .PARAMETER WaitMs
+        Milliseconds to wait between jobs
+
 #>
 [CmdletBinding()]
 Param
 (
+    [ValidateScript({ $_ -in ((Get-ChildItem "$($psscriptroot)\test_scripts").Name.Replace(".ps1",""))})]
     [string[]]
     $TestScriptsToRun,
 
+    [ValidateScript({ $_ -in ((Get-ChildItem "$($psscriptroot)\monitor_configs").Name.Replace("_"," ").Replace(".csv",""))})]
     [string[]]
     $TestCategoriesToRun,
 
@@ -94,6 +99,7 @@ Param
     [switch]
     $MPMode, 
 
+    [ValidateSet("Test_Script","Category+Test")]
     [string]
     $GroupBy="Category+Test",
 
