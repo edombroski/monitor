@@ -91,7 +91,7 @@ PROCESS
     If(-not($Quiet)){Write-Host "($($TestName)) Pinging host: $($Target)..." -NoNewLine}
     Write-Verbose ""
 
-    # Loop for 
+    # Loop for configurable retries
     While( ($Tries++ -lt $MaxTries) -and !$Success) {
         Try {
             Write-Verbose "Attempt #$($Tries)"
