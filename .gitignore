@@ -1,3 +1,3 @@
 LastRun.txt
-*.csv
+monitor_configs/*.csv
 monitor_data/*

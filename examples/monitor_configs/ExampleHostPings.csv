@@ -1,0 +1,5 @@
+Monitor_Name,Target,Test_Script,Test_Params,Action_Script,Action_Params,Options
+one.one.one.one,1.1.1.1,ping,,email,,
+Google Ping,google.com,ping,"MaxTries=1,TimeOutSeconds=1,SleepSeconds=0",email,,
+Yahoo Ping,print-bea-p101.univ.albany.edu,ping,,email,,MAINTENANCE_MODE=TRUE
+

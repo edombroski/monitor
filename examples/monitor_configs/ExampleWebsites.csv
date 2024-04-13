@@ -1,0 +1,3 @@
+Monitor_Name,Target,Test_Script,Test_Params,Action_Script,Action_Params,Options
+Website (Google),www.google.com,http,,Email,to=nobody@nobody.com,
+Website (Yahoo),www.yahoo.com,http,,Email,to=nobody@nobody.com,
