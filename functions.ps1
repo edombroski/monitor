@@ -44,6 +44,7 @@ Function Write-LogHost
         $Message,
         [switch]$Warning,
         [switch]$StatusChange,
+        [switch]$Force,
         $ForegroundColor
     )
 
@@ -60,8 +61,11 @@ Function Write-LogHost
     # Log start
     "$($ts) $Message" | Out-File -Append $LogFile
     If($Warning) { Write-Warning $Message }
-    ElseIf($ForegroundColor) { Write-Host $Message -Foregroundcolor $ForegroundColor }
-    Else { Write-Host $Message }
+    
+    If( !$Quiet -or $Force ) {
+        If($ForegroundColor) { Write-Host $Message -Foregroundcolor $ForegroundColor }
+        Else { Write-Host $Message }
+    }
 
     If($StatusChange) {
         "$($ts) $Message" | Out-File -Append $StatusChangesLogFile
@@ -84,6 +88,25 @@ Function Write-ErrorMessage
     )
 
     $NewMessage = "ERROR: " + $Message
-    Write-LogHost $NewMessage -ForegroundColor "Red"
+    Write-LogHost $NewMessage -ForegroundColor "Red" -Force
+
+}
+
+
+Function Write-WarningMessage
+{
+    <#
+        .SYNOPSIS
+            Write error message to screen in red text and append "ERROR" to it.
+        .DESCRIPTION
+            Not MP safe! Don't use in tests when using MP mode!
+    #>
+    Param
+    (
+        $Message
+    )
+
+    $NewMessage = "WARNING: " + $Message
+    Write-LogHost $NewMessage -Force
 
 }

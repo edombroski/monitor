@@ -119,6 +119,20 @@ $StartTime = Get-Date
 # Load functions
 . "$($psscriptroot)\functions.ps1"
 
+Write-LogHost "Starting monitor."
+
+If($OnlyUp -and $OnlyDown) {
+    Write-ErrorMessage "OnlyUp and OnlyDown cannot be provided at the same time, exiting."
+    Return
+}
+If($OnlyUp) {
+    Write-LogHost "OnlyUp set, only performing tests on nodes with Status=OK"
+}
+ElseIf($OnlyDown) {
+    Write-LogHost "OnlyDown set, only performing tests on nodes with Status!=OK"
+
+}
+
 # Set environment variable for monitor script path
 # This is so the script blocks can find the functions
 $env:_MonScriptPath=$($PSScriptRoot)
@@ -305,7 +319,7 @@ Foreach($MonitorConfigFile in $MonitorConfigFiles) {
             $PreviousStatus = (Import-CLIXML $StatusFile)."Status"
         }
         Else {
-            If(-not($Quiet)){Write-Host "Creating status file $StatusFile"}
+            Write-LogHost "Creating status file $StatusFile"
             New-Item -Type File $StatusFile -Force | Out-Null
             $PreviousStatus = "INIT"
             $StatusObject = [pscustomobject]@{
@@ -422,10 +436,7 @@ $TestStartTime=Get-Date
 # If Multi-Processing Mode, create jobs queue
 If($MPMode) {
     $Jobs=@()
-    If(-not($Quiet)) {
-        Write-Host "MPMode: Group by attribute: $GroupBy"
-        Write-Host "MPMode: Results at end."
-    }
+    Write-LogHost "MP Mode: Group by attribute: $GroupBy"
 }
 
 # Go through each group 
@@ -462,19 +473,19 @@ Foreach($ThingToMonitorGroup in $ThingsToMonitorGroup ) {
 
         # Wait for max jobs to execute before starting another one
         While( (Get-Job|?{$_.State -eq "Running"}|Measure).Count -ge $MaxJobs ) {
-            If(-not($Quiet)) {Write-Host "Max concurrent jobs exceeded...waiting."}
+            Write-LogHost "MP Mode: Max concurrent jobs exceeded...waiting."
             Start-Sleep -Milliseconds $WaitMs
         }
 
         # Invoke Background Job
         Try {
-            If(-not($Quiet)) {Write-Host -NoNewLine "Starting job for test $($Test)..."}
+            Write-LogHost "MP Mode: Starting job for test $($Test)."
             $Jobs+=$(Start-Job -ScriptBlock $TestScriptBlockWrapper -ArgumentList (,$TestPropertyObjects))
-            If(-not($Quiet)) {Write-Host "Done."}
+            Write-LogHost "MP Mode: Done."
         }
         Catch {
-            If(-not($Quiet)) {Write-Host "Failed."}
-            Write-ErrorMessage "Error creating job"
+            Write-LogHost "MP Mode: Failed."
+            Write-ErrorMessage "MP Mode: Error creating job"
         }
 
     }
@@ -503,10 +514,14 @@ If($MPMode) {
     # Get results
     If($Jobs) {
         # Get all results
+        Write-LogHost "MP Mode: Waiting for jobs to complete."
         $Results = $Jobs|Get-Job|Wait-Job|Receive-Job
+        Write-LogHost "MP Mode: Done"
 
         # Clean up jobs
+        Write-LogHost "MP Mode: Cleaning up jobs."
         $Jobs|Remove-Job
+        Write-LogHost "MP Mode: Done."
     }
    
 }
@@ -620,8 +635,8 @@ Foreach($Result in $Results) {
 $EndTime = Get-Date
 $TestSeconds = ($TestEndTime - $TestStartTime).TotalSeconds
 $TotalSeconds = ($EndTime - $StartTime).TotalSeconds
-Write-Host "Performed $ResultsCount tests."
-Write-Host "Tests execution time: $($TestSeconds) seconds"
-Write-Host "Total execution time: $($TotalSeconds) seconds"
+Write-LogHost "Performed $ResultsCount tests."
+Write-LogHost "Tests execution time: $($TestSeconds) seconds"
+Write-LogHost "Total execution time: $($TotalSeconds) seconds"
 
-
+Write-LogHost "Ending monitor."
