@@ -1,6 +1,7 @@
 LastRun.txt
-monitor_configs/*.csv
+config_local.ps1
+monitor_configs/*
 monitor_data/*
 test_scripts/*
 action_scripts/*
-config_local.ps1
+log_files/*

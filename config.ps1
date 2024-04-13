@@ -11,10 +11,13 @@ $TestScriptLocation             = "$($ScriptRoot)\test_scripts"
 $ActionScriptLocation           = "$($ScriptRoot)\action_scripts"
 $HelperScriptLocation           = "$($ScriptRoot)\helper_scripts"
 $MonitorDataLocation            = "$($ScriptRoot)\monitor_data"
+$LogFileLocation                = "$($ScriptRoot)\log_files"
 $LocalConfigFileLocation        = "$($ScriptRoot)\config_local.ps1"
 
 # Configurations for files
 $LastRunFile                    = "$($ScriptRoot)\LastRun.txt"
+$LogFile                        = "$($LogFileLocation)\LogFile.log"
+$StatusChangesLogFile           = "$($LogFileLocation)\StatusChanges.log"
 
 # Repeat Action Minutes
 $RepeatActionMinutes            = 12*60

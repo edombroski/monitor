@@ -85,7 +85,7 @@ $TestScriptBlockWrapper = {
         $ScriptBlock = [scriptblock]::Create($TestParameters[0])
     }
     Catch {
-        Write-Host "Failed to create script block from file"
+        Write-ErrorMessage "Failed to create script block from file"
         Return
     }
 
@@ -94,7 +94,8 @@ $TestScriptBlockWrapper = {
         $TestParameterObjects= $TestParameters[1..$($NumberOfObjects -1)]
     }
     Catch {
-        Write-Host "Can't get parameter objects."
+        Write-ErrorMessage "Can't get parameter objects."
+        Return
     }
 
     $TestParameterObjects|&$ScriptBlock
@@ -401,7 +402,7 @@ Foreach($ThingToMonitorGroup in $ThingsToMonitorGroup ) {
         }
         Catch {
             If(-not($Quiet)) {Write-Host "Failed."}
-            Write-Host "Error creating job"
+            Write-ErrorMessage "Error creating job"
         }
 
     }
@@ -457,8 +458,8 @@ Foreach($Result in $Results) {
     #  NOTICE: One time alert, run action but set status=OK
     ##################################################################
     If($CurrentStatus -eq "NOTICE") {
-        Write-Host "NOTICE:`tMonitor=$($Result.Monitor_Name), Target=$($Result.Target), Test=$($Result.Test_Script)"
-        Write-Host "STATUS MESSAGE:`t$($Result.Message)"
+        Write-LogHost -StatusChange "NOTICE:`tMonitor=$($Result.Monitor_Name), Target=$($Result.Target), Test=$($Result.Test_Script)"
+        Write-LogHost -StatusChange "STATUS MESSAGE:`t$($Result.Message)"
         $StatusObject = [pscustomobject]@{
             "Status"="OK"
         }
@@ -472,9 +473,9 @@ Foreach($Result in $Results) {
     ##################################################################
     ElseIf($CurrentStatus -ne $PreviousStatus) {
 
-        Write-Host "STATUS CHANGE:`tMonitor=$($Result.Monitor_Name), Target=$($Result.Target), Test=$($Result.Test_Script), Change=[$($PreviousStatus) -> $($CurrentStatus)]"
+        Write-LogHost -StatusChange "STATUS CHANGE:`tMonitor=$($Result.Monitor_Name), Target=$($Result.Target), Test=$($Result.Test_Script), Change=[$($PreviousStatus) -> $($CurrentStatus)]"
         If($Result.Message) {
-            Write-Host "STATUS MESSAGE:`t$($Result.Message)"
+            Write-LogHost -StatusChange "STATUS MESSAGE:`t$($Result.Message)"
         }
         $StatusObject = @{
             "Status"=$CurrentStatus
@@ -486,7 +487,7 @@ Foreach($Result in $Results) {
         #  Previous status was INIT, don't run action
         ##################################################################
         If($PreviousStatus -eq "INIT") { 
-            Write-Host "ACTION TAKEN:`tNone (Previous state INIT)"
+            Write-LogHost -StatusChange "ACTION TAKEN:`tNone (Previous state INIT)"
             Continue 
         }
 
@@ -494,7 +495,7 @@ Foreach($Result in $Results) {
         #  Previously in maintenance mode, now OK, don't run action
         ##################################################################
         ElseIf($PreviousStatus -eq "MAINT" -and $CurrentStatus -eq "OK") { 
-            Write-Host "ACTION TAKEN:`tNone (Previous Status=MAINT, Current Status=OK)"
+            Write-LogHost -StatusChange "ACTION TAKEN:`tNone (Previous Status=MAINT, Current Status=OK)"
             Continue 
         }
 
@@ -512,13 +513,13 @@ Foreach($Result in $Results) {
     #  Not OK but AlwaysInvokeAction is set, run action
     ##################################################################
     ElseIf($CurrentStatus -ne "OK" -and $AlwaysInvokeAction) {
-        Write-Host "STATUS UPDATE:`tMonitor=$($Result.Monitor_Name), Target=$($Result.Target), Test=$($Result.Test_Script)"
-        Write-Host "STATUS MESSAGE:`t$($Result.Message)"
+        Write-LogHost -StatusChange "STATUS UPDATE:`tMonitor=$($Result.Monitor_Name), Target=$($Result.Target), Test=$($Result.Test_Script)"
+        Write-LogHost -StatusChange "STATUS MESSAGE:`t$($Result.Message)"
         If($Result.Action_Script) {
-            Write-Host "ACTION TAKEN:`t$($Result.Action_Script) (Previous Status=$($PreviousStatus), Current Status=$($CurrentStatus), ALWAYS_INVOKE_ACTION=True)"
+            Write-LogHost -StatusChange "ACTION TAKEN:`t$($Result.Action_Script) (Previous Status=$($PreviousStatus), Current Status=$($CurrentStatus), ALWAYS_INVOKE_ACTION=True)"
         }
         Else {
-            Write-Host "ACTION TAKEN:`tNone (ALWAYS_INVOKE_ACTION=True but no Action_Script defined)"
+            Write-LogHost -StatusChange "ACTION TAKEN:`tNone (ALWAYS_INVOKE_ACTION=True but no Action_Script defined)"
         }
     }
 
@@ -529,14 +530,14 @@ Foreach($Result in $Results) {
     If($RunActionScript) {
         If($Result.Action_Script) {
             If($Actions[$Result.Action_Script]) {
-                Write-Host "ACTION TAKEN:`t$($Result.Action_Script)"
+                Write-LogHost -StatusChange "ACTION TAKEN:`t$($Result.Action_Script)"
             }
             Else {
-                Write-Host "ACTION TAKEN:`tNone (No Action_Script of $($Result.Action_Script) exists)"
+                Write-LogHost -StatusChange "ACTION TAKEN:`tNone (No Action_Script of $($Result.Action_Script) exists)"
             }
         }
         Else {
-            Write-Host "ACTION TAKEN:`tNone (No Action_Script defined)"
+            Write-LogHost -StatusChange "ACTION TAKEN:`tNone (No Action_Script defined)"
         }
     } 
 }
