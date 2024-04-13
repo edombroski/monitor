@@ -36,8 +36,6 @@ Param
 
     [int]
     $WaitMs=500
-
-
 )
 
 # Get start time for end statistics
@@ -49,17 +47,18 @@ $StartTime = Get-Date
 # Load functions
 . "$($psscriptroot)\functions.ps1"
 
-####################################################################################################
+#####################################################################################################
 # MP Script Block Wrapper
-####################################################################################################
+#####################################################################################################
 # To perform the monitor tests, I pipe an array of parameter objects to a ScriptBlock
 #
 # The standard way of doing multi-processing in PowerShell is using Start-Job
+#
 # While Start-Job takes a ScriptBlock as a parameter, it doesn't seem to take pipeline input to it.
 #
-# So, I use a "wrapper" ScriptBlock to do so
+# So, I use this "wrapper" ScriptBlock to do so
 #
-# I use one array of 'TestParameters' that is fed via -ArgumentList
+# I use one array of 'TestParameters' that is fed to it (as a single Array paremter) iva -ArgumentList
 #
 # The first object in the array is the ScriptBlock I want the wrapper to invoke
 #
@@ -70,7 +69,7 @@ $StartTime = Get-Date
 #
 # This does seem to work when you do one or the other, but if both are provided it seems to flatten
 # the array into one object. So to get around this I use one array.
-#####################################################################################################
+######################################################################################################
 $TestScriptBlockWrapper = {
     Param([object[]]$TestParameters)
 
