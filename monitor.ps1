@@ -29,7 +29,7 @@ Param
     $MPMode, 
 
     [string]
-    $GroupBy="Test_Script",
+    $GroupBy="Category+Test",
 
     [int]
     $MaxJobs=$env:NUMBER_OF_PROCESSORS+1,
