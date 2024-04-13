@@ -2,7 +2,7 @@
 
 Monitor.ps1 is an agent-less, pluggable PowerShell monitoring script.
 
-The infrastructure can be configured to monitor anything that PowerShell script (.ps1) can be written for that produces an "OK" or "!OK" result.
+The infrastructure can be configured to monitor anything that PowerShell script (.ps1) can be written for that produces an "OK" or "NOT OK" results.
 
 The base script designed to require no dependencies other than PowerShell core.
 
@@ -21,7 +21,9 @@ This version is currently in beta as I am undertaking a re-write.  Not all of th
 ## FEATURES
 
 1. Flexibility. This script can monitor a number of different things (ping availability, website availability, ports being open, disk space, group memberships, etc.). Anything that you can write a PowerShell script for to produce a "OK" or "NOT OK" result can be monitored.
-2. No dependencies. This does not require any database or web application.  All status information is kept on the filesystem in easily human and machine readable XML files.  No third-party modules are required outside for the base infrastructure other than PowerShell core (some tests, actions, or helper scripts may require other modules).
+
+2. No dependencies. This does not require any database or web application.  All status information is kept on the filesystem in easily human and machine readable XML files.  No third-party modules are required for the base infrastructure, nor does it require a database, web application, or any other components other than PowerShell Core (7+). 
+
 3. Supports "multi-process" mode which splits up monitoring jobs into multiple PowerShell background jobs. In normal single-process mode using the "ping" test, ~3300 'up' nodes with average latency of about ~13ms can be pinged in about 45 seconds. In multi-process mode, the same 3300 nodes can be pinged in about 18 seconds.  MP mode is likely make a much larger difference improving the overall throughput of slower tests against remote systems (disk space checks, etc.)
 4. Maintenance Mode. Specific monitors can be temporarily disabled.
 5. Repeated Actions. An action script can be repeated on a configurable interval.
@@ -29,7 +31,7 @@ This version is currently in beta as I am undertaking a re-write.  Not all of th
 7. Optional static HTML dashboards of status information.
 
 ## WHAT THIS ISNT
-... replacement for a grownup agent based monitoring system such as Zabbix, SCOM, etc.  This does not provide any sort of time-series performance information.
+A replacement for a grown-up agent-based monitoring system such as Zabbix, SCOM, etc. or a more fully featured SNMP based system like SolarWinds. This script does not poll any sort of time-series information like performance data, error counts, etc.
 
 ## PSEUDOCODE
         For Each thing_to_monitor
