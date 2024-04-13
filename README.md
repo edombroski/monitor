@@ -6,27 +6,37 @@ The infrastructure can be configured to monitor anything that PowerShell script 
 
 The base script designed to require no dependencies other than PowerShell core.
 
-
-
 It consists of:
-1. One or more test scripts (.ps1 files)
-2. One or more (optional) action scripts (.ps1 files)
-3. This wrapper script that calls the test scripts, passing the configured montiors, and invokes the action scripts on status changes.
+1. One or more test scripts (.ps1 files) that can be fed a list of things to monitor via the pipeline.
+2. One or more (optional) action scripts (.ps1 files) that can be invoked.
+3. The Monitor.ps1 wrapper script that calls the test scripts (passing the things to monitor), and optionally invokes the action scripts on status changes.
 4. One or more Comma-Separated-Value (.csv) configuration files containing things to monitor
-5. XML Status files to keep track of status
+5. XML status files to keep track of status
 6. (Optional) static HTML status dashboards
 7. Helper scripts to automatically discover things to monitor and manage configuration .csv files
 
-(Not all of these components are available on Github yet)
+This version is currently in beta as I am undertaking a re-write.  Not all of the above is available on GitHub yet.
 
 
-        Pseudocode:
-            For Each thing_to_monitor
-                Previous_Status=( get_status_from_status_file )
-                Current_Status =( run_test_script )
-                If( Current_Status != Previous_Status ) 
-                    run_action_script
+## FEATURES
 
+1. Flexibility. This script can monitor a number of different things (ping availability, website availability, ports being open, disk space, group memberships, etc.). Anything that you can write a PowerShell script for to produce a "OK" or "NOT OK" result can be monitored.
+2. No dependencies. This does not require any database or web application.  All status information is kept on the filesystem in easily human and machine readable XML files.  No third-party modules are required outside for the base infrastructure other than PowerShell core (some tests, actions, or helper scripts may require other modules).
+3. Supports "multi-process" mode which splits up monitoring jobs into multiple PowerShell background jobs. In normal single-process mode using the "ping" test, ~3300 'up' nodes with average latency of about ~13ms can be pinged in about 45 seconds. In multi-process mode, the same 3300 nodes can be pinged in about 18 seconds.  MP mode is likely make a much larger difference improving the overall throughput of slower tests against remote systems (disk space checks, etc.)
+4. Maintenance Mode. Specific monitors can be temporarily disabled.
+5. Repeated Actions. An action script can be repeated on a configurable interval.
+6. "NOTICE" alerts for one-time events.
+7. Optional static HTML dashboards of status information.
+
+## WHAT THIS ISNT
+... replacement for a grownup agent based monitoring system such as Zabbix.
+
+## PSEUDOCODE
+        For Each thing_to_monitor
+            Previous_Status=( get_status_from_status_file )
+            Current_Status =( run_test_script )
+            If( Current_Status != Previous_Status ) 
+                run_action_script
 
 
 ## TEST SCRIPTS
@@ -88,3 +98,20 @@ Monitor_Name, Target, Test_Script, Test_Script_Params, Action_Script, Action_Scr
 ### ping
 
 ### http
+
+### ports
+
+### service
+
+### task
+
+### disk
+
+
+## EXAMPLE ACTION SCRIPTS INCLUDED
+
+### email
+
+## HELPER SCRIPTS
+
+### email
