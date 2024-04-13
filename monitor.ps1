@@ -49,7 +49,7 @@ $StartTime = Get-Date
 
 # Set environment variable for monitor script path
 # This is so the script blocks can find the functions
-$env:_MonScriptPath=$($psscriptroot)
+$env:_MonScriptPath=$($PSScriptRoot)
 
 #####################################################################################################
 # MP Script Block Wrapper
@@ -77,6 +77,7 @@ $env:_MonScriptPath=$($psscriptroot)
 $TestScriptBlockWrapper = {
     Param([object[]]$TestParameters)
 
+    # Get number of objects so we can determine size of parameter objects array
     $NumberOfObjects = ($TestParameters|Measure).Count
 
     # First parameter is the script block we want to run
@@ -327,10 +328,14 @@ Foreach($MonitorConfigFile in $MonitorConfigFiles) {
 # Then I can pipe all the 'things to monitor' configurations for a given test into that script
 # Thus the BEGIN section of the the particular .ps1 is only invoked once for that test or test/category combination
 ###############################################################################################################################
+
 # Group things by given parameter
 $ThingsToMonitorGroup = $ThingsToMonitor|Group-Object $GroupBy
 
+# Get the Tests time for end statistics
 $TestStartTime=Get-Date
+
+# If Multi-Processing Mode, create jobs queue
 If($MPMode) {
     $Jobs=@()
     If(-not($Quiet)) {
@@ -338,9 +343,11 @@ If($MPMode) {
         Write-Host "MPMode: Results at end."
     }
 }
+
+# Go through each group 
 Foreach($ThingToMonitorGroup in $ThingsToMonitorGroup ) {
 
-    # Get test from group name
+    # Get test name from group name
     If($GroupBy -eq "Test_Script") {
         $Test = $ThingToMonitorGroup.Name
     }
@@ -357,21 +364,23 @@ Foreach($ThingToMonitorGroup in $ThingsToMonitorGroup ) {
         Continue
     }
 
-    # Build parameters objects to pass to test scripts
+    # Build property objects to pipe to test scripts
     $TestPropertyObjects = New-Object System.Collections.ArrayList
     Foreach($ThingToMonitor in $ThingToMonitorGroup.Group) {
         $ThingToMonitor.Test_Script_Properties.Add("MonitorObject",$ThingToMonitor)
         $TestPropertyObjects.Add([pscustomobject]$ThingToMonitor.Test_Script_Properties)|Out-Null
     }
 
+    # If we're doing MP mode, insert the scriptblock to the property objects
+    # Results will be grabbed by Get-Job later
     If($MPMode) {
         $TestPropertyObjects.Insert(0, $TestScriptBlock)|Out-Null
 
+        # Wait for max jobs to execute before starting another one
         While( (Get-Job|?{$_.State -eq "Running"}|Measure).Count -ge $MaxJobs ) {
             If(-not($Quiet)) {Write-Host "Max concurrent jobs exceeded...waiting."}
             Start-Sleep -Milliseconds $WaitMs
         }
-
 
         # Invoke Background Job
         Try {
@@ -385,6 +394,9 @@ Foreach($ThingToMonitorGroup in $ThingsToMonitorGroup ) {
         }
 
     }
+
+    # Single Process/serial mode.  Just pass property objects to the script block
+    # Add results to array
     Else {
         # Get test results from script block
         $TestResults = $TestPropertyObjects | &$TestScriptBlock
@@ -401,6 +413,7 @@ Foreach($ThingToMonitorGroup in $ThingsToMonitorGroup ) {
 
 }
 
+# If MP mode, get results from Get-Job and cleanup
 If($MPMode) {
         
     # Get results
@@ -413,11 +426,16 @@ If($MPMode) {
     }
    
 }
+
+# End time for test stats
 $TestEndTime=Get-Date
 
+# Results count for stats
 $ResultsCount = ($Results|Measure).Count
 
-
+###############################################################################################################################
+# PROCESS RESULTS
+###############################################################################################################################
 Foreach($Result in $Results) {
     $CurrentStatus  = $Result.CurrentStatus
     $PreviousStatus = $Result.PreviousStatus
