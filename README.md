@@ -40,6 +40,16 @@ A replacement for a grown-up agent-based monitoring system such as Zabbix, SCOM,
             If( Current_Status != Previous_Status ) 
                 run_action_script
 
+## v2 CHANGES
+1. Written for PowerShell core instead of Windows PowerShell
+2. Use folders for test data instead of just files (possible future usecases)
+3. Use XML files and Import-CLIXML/Export-CLIXML instead of plaintext status files (possible future usecases)
+4. Pass full monitor configuration objects to test scripts
+5. Combine .CSV options into one column and rename columns
+6. Initial multi-process mode
+7. New parameters (TestCategoriesToRun, OnlyUp, OnlyDown, Quiet)
+8. New options (Always_Invoke_Action)
+
 ## v2 TODO
 1. Add back action scripts
 2. Add back status dashboards
