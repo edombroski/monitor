@@ -6,6 +6,8 @@ The infrastructure can be configured to monitor anything that PowerShell script 
 
 The base script designed to require no dependencies other than PowerShell core.
 
+
+
 It consists of:
 1. One or more test scripts (.ps1 files)
 2. One or more (optional) action scripts (.ps1 files)
@@ -15,6 +17,9 @@ It consists of:
 6. (Optional) static HTML status dashboards
 7. Helper scripts to automatically discover things to monitor and manage configuration .csv files
 
+(Not all of these components are available on Github yet)
+
+
         Pseudocode:
             For Each thing_to_monitor
                 Previous_Status=( get_status_from_status_file )
@@ -23,7 +28,6 @@ It consists of:
                     run_action_script
 
 
-(Not all of these components are available on Github yet)
 
 ## TEST SCRIPTS
 
@@ -32,6 +36,8 @@ Each test script is designed to be able to be invoked as a standalone script, or
 If called from the wrapper script, a custom object (MonitorObject) will also be passed.
 
 It is expected the test script modify the ModifyObject "status" property and return it.
+
+It may also modify the "message" property to provide a more verbose message.
 
 If the test "passes", the status must be set to the string "OK"
 
