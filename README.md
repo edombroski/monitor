@@ -57,6 +57,7 @@ A replacement for a grown-up agent-based monitoring system such as Zabbix, SCOM,
 4. Add function to clean up monitor data for monitor configs that don't exist
 5. Add function to place a target into maintenance mode in all configs
 6. Re-write helper scripts for new configuration syntax
+7. Sign scripts
 
 ## v.NEXT IDEAS
 1. Convert background jobs to use PowerShell runspaces
