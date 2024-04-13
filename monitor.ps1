@@ -389,11 +389,18 @@ Foreach($ThingToMonitorGroup in $ThingsToMonitorGroup ) {
         # Get test results from script block
         $TestResults = $TestPropertyObjects | &$TestScriptBlock
 
-        # Add to main results
-        $Results.AddRange($TestResults)
+        If($TestResults) {
+            If(($TestResults|Measure).Count -eq 1) {
+                $Results.Add($TestResults)|Out-Null
+            }
+            Else {
+                $Results.AddRange($TestResults)|Out-Null
+            }
+        }
     }
 
 }
+
 If($MPMode) {
         
     # Get results
@@ -506,7 +513,7 @@ Foreach($Result in $Results) {
 $EndTime = Get-Date
 $TestSeconds = ($TestEndTime - $TestStartTime).TotalSeconds
 $TotalSeconds = ($EndTime - $StartTime).TotalSeconds
-Write-Host "Performed $ResultsCount monitor tests"
+Write-Host "Performed $ResultsCount tests."
 Write-Host "Tests execution time: $($TestSeconds) seconds"
 Write-Host "Total execution time: $($TotalSeconds) seconds"
 
