@@ -29,7 +29,7 @@ Param
     $MPMode, 
 
     [string]
-    $GroupBy="Test_Script", 
+    $GroupBy="Test_Script",
 
     [int]
     $MaxJobs=$env:NUMBER_OF_PROCESSORS+1,
@@ -330,8 +330,10 @@ $ThingsToMonitorGroup = $ThingsToMonitor|Group-Object $GroupBy
 $TestStartTime=Get-Date
 If($MPMode) {
     $Jobs=@()
-    Write-Host "MPMode: Group by attribute: $GroupBy"
-    Write-Host "MPMode: Results at end."
+    If(-not($Quiet)) {
+        Write-Host "MPMode: Group by attribute: $GroupBy"
+        Write-Host "MPMode: Results at end."
+    }
 }
 Foreach($ThingToMonitorGroup in $ThingsToMonitorGroup ) {
 
@@ -348,7 +350,7 @@ Foreach($ThingToMonitorGroup in $ThingsToMonitorGroup ) {
         $TestScriptBlock  = $Tests[$Test]
     }
     Else {
-        Write-Host "No test script for test ""$($Test)"""
+        Write-Warning "No test script for test ""$($Test)"""
         Continue
     }
 
@@ -363,19 +365,19 @@ Foreach($ThingToMonitorGroup in $ThingsToMonitorGroup ) {
         $TestPropertyObjects.Insert(0, $TestScriptBlock)|Out-Null
 
         While( (Get-Job|?{$_.State -eq "Running"}|Measure).Count -ge $MaxJobs ) {
-            Write-Host "Max concurrent jobs exceeded...waiting."
+            If(-not($Quiet)) {Write-Host "Max concurrent jobs exceeded...waiting."}
             Start-Sleep -Milliseconds $WaitMs
         }
 
 
         # Invoke Background Job
         Try {
-            Write-Host -NoNewLine "Starting job..."
-            $Jobs+=Start-Job -ScriptBlock $TestScriptBlockWrapper -ArgumentList (,$TestPropertyObjects)
-            Write-Host "Done."
+            If(-not($Quiet)) {Write-Host -NoNewLine "Starting job for test $($Test)..."}
+            $Jobs+=$(Start-Job -ScriptBlock $TestScriptBlockWrapper -ArgumentList (,$TestPropertyObjects))
+            If(-not($Quiet)) {Write-Host "Done."}
         }
         Catch {
-            Write-Host "Failed."
+            If(-not($Quiet)) {Write-Host "Failed."}
             Write-Host "Error creating job"
         }
 
