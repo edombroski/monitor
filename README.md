@@ -40,10 +40,25 @@ A replacement for a grown-up agent-based monitoring system such as Zabbix, SCOM,
             If( Current_Status != Previous_Status ) 
                 run_action_script
 
-## TODO
+## v2 TODO
 1. Add back action scripts
 2. Add back status dashboards
 3. Re-write test scripts for new infrastructure
+4. Add function to clean up monitor data for monitor configs that don't exist
+5. Add function to place a target into maintenance mode in all configs
+6. Re-write helper scripts for new configuration syntax
+
+## v.NEXT IDEAS
+1. Convert background jobs to use PowerShell runspaces
+2. Splitting up of tests in one config file+test combination
+2. MP-safe Log+Host function that tests can use
+3. Keep track of lastChange, lastNotOK, notOKCount in status files
+4. "Intermediate" status value between OK and !OK (e.g. "Monitoring" )
+5. Per test configurable intervals
+6. Automatic maintenance mode timeouts
+7. Credential management
+
+
 
 ## TEST SCRIPTS
 
