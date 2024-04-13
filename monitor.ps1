@@ -47,6 +47,10 @@ $StartTime = Get-Date
 # Load functions
 . "$($psscriptroot)\functions.ps1"
 
+# Set environment variable for monitor script path
+# This is so the script blocks can find the functions
+$env:_MonScriptPath=$($psscriptroot)
+
 #####################################################################################################
 # MP Script Block Wrapper
 #####################################################################################################
