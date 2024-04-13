@@ -1,3 +1,69 @@
+<#
+    .SYNOPSIS
+        Monitor things using pluggable scripts.
+
+    .DESCRIPTION
+        Monitor.ps1 is an agent-less, dependency-less, flexible and pluggable PowerShell monitoring script infrastructure.
+
+        It consists of:
+            1. One or more test scripts (.ps1 files)
+            2. One or more (optional) action scripts (.ps1 files)
+            3. This wrapper script that calls the test scripts, passing the configured montiors, and invokes the action scripts on status changes.
+            4. One or more Comma-Separated-Value (.csv) configuration files containing things to monitor
+            5. XML Status files to keep track of status
+            6. (Optional) static HTML status dashboards
+            5. Helper scripts to automatically discover things to monitor and manage configuration .csv files
+
+        Pseudocode:
+            For Each thing_to_monitor
+                Previous_Status=( get_status_from_status_file )
+                Current_Status =( run_test_script )
+                If( Current_Status != Previous_Status ) 
+                    run_action_script
+
+        For efficiency, the monitored objects are grouped by test (and possibly further) and passed to the test script on the pipeline.
+
+        Optionally, this may be run in "MP" (multi-processing) mode, in which those tests are done via PowerShell background jobs.
+
+    .PARAMETER TestScriptsToRun
+        Only run test scripts in given list (excluding .ps1 extension).
+
+    .PARAMETER TestCategoriesToRun
+        Only run tests defined in a specific category.  
+
+        The category is the CSV file name with underscores converted to spaces without the .csv extension.
+
+    .PARAMETER Targets
+        Only run tests against specific targets.
+
+    .PARAMETER OnlyDown
+        Only run tests against systems previously marked not OK
+
+    .PARAMETER OnlyUp
+        Only run tests against systems previously marked OK
+
+    .PARAMETER MPMode
+        Utilize multiple background jobs for the tests.
+
+        Currently, this script groups tests by the attribute defined by GroupBy and 
+        invokes a single background job per group.
+    
+        This mode is particularly useful if you have several 'slow' test types or many thousands of nodes
+        that can be split up into multiple input files.
+
+        A future enhancement is expected to add batching within a group.
+
+    .PARAMETER GroupBy
+        If using MP mode, which attribute we used to group monitors into
+
+        Currently supported:
+            "Category+Test":    use one (or more) background jobs per Category+Test
+            "Test_Script":      use one (or more) background jobs per Test script.)
+
+    .PARAMETER MaxJobs
+        Maximum total background jobs to run concurrently
+
+#>
 [CmdletBinding()]
 Param
 (
