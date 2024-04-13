@@ -29,7 +29,7 @@ This version is currently in beta as I am undertaking a re-write.  Not all of th
 7. Optional static HTML dashboards of status information.
 
 ## WHAT THIS ISNT
-... replacement for a grownup agent based monitoring system such as Zabbix.
+... replacement for a grownup agent based monitoring system such as Zabbix, SCOM, etc.  This does not provide any sort of time-series performance information.
 
 ## PSEUDOCODE
         For Each thing_to_monitor
@@ -38,6 +38,10 @@ This version is currently in beta as I am undertaking a re-write.  Not all of th
             If( Current_Status != Previous_Status ) 
                 run_action_script
 
+## TODO
+1. Add back action scripts
+2. Add back status dashboards
+3. Re-write test scripts for new infrastructure
 
 ## TEST SCRIPTS
 
@@ -93,25 +97,57 @@ Monitor_Name, Target, Test_Script, Test_Script_Params, Action_Script, Action_Scr
 
                             Default=720 (every 12 hours)
 
-## EXAMPLE TEST SCRIPTS INCLUDED
+## EXAMPLE TEST SCRIPTS TO BE INCLUDED
 
 ### ping
+Test host availability via ICMP echo (ping).
 
 ### http
+Tests remote web server availability via Invoke-WebRequest. Supports various options such as searching for a specific JSON key/value.
 
 ### ports
+Tests a remote system for if a configured set of TCP or UDP ports are open.
+
+### sslcert
+Tests a remote system's SSL/TLS certificate for nearing expiration.
 
 ### service
+Tests a remote (Windows) system if a service is running. Utilizes Remote PowerShell.
 
 ### task
+Tests a remote (Windows) system if a Windows scheduled task is enabled and has run successfully within a configurable timeframe. Utilizes Remote PowerShell.
 
 ### disk
+Tests a remote (Windows) system for consumed disk space. Utilizes Remote PowerShell.
+
+### group
+Tests a remote (Windows) system for local group membership.  If it changes from a stored value, raise an alert. Utilizes Remote PowerShell.
+
+### smtp
+Test successfully relaying an SMTP message through an SMTP server with configurable parameters
+
+### mx
+Test successfully transmitting an email via SMTP through the mail-exchanger servers of a specific domain.
+
+### module_import
+Test whether a PowerShell module in a given path is loadable.
+
+## account_expirations
+Test whether a specific Active Directory account is nearing its expiration date (requires Active Directory PowerShell module).
 
 
-## EXAMPLE ACTION SCRIPTS INCLUDED
+## EXAMPLE ACTION SCRIPTS TO BE INCLUDED
 
 ### email
+Sends an email notification to configurable addresses.
 
-## HELPER SCRIPTS
+## EXAMPLE HELPER SCRIPTS TO BE INCLUDED
 
-### email
+### Update-WindowsHostMonitors.ps1
+Queries a set of Active Directory OUs for computer account objects, and automatically adds/removes monitoring objects accordingly. Requires Active Directory module.
+
+### Update-SolarWindsNodeMonitors.ps1
+Queries the database of a SolarWinds Network Performance Monitor system for a list of nodes to ping.
+
+### Update-MistAPMonitors.ps1
+Queries the the MIST networks API for a list of sites and Access Points and their IP addresses. Requires Mist API access.
