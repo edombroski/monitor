@@ -110,6 +110,17 @@ Foreach($TestScript in $TestScriptFiles) {
     $Tests.Add($TestName,$TestContents)
 }
 
+
+# Get contents of all the action scripts into a hashtable by action
+$Actions=@{}
+$ActionScriptFiles = Get-ChildItem $ActionScriptLocation
+Foreach($ActionScript in $ActionScriptFiles) {
+    $ActionName = $ActionScript.Name.Replace(".ps1","")
+    $ActionContents = Get-Command $ActionScript.FullName | Select -ExpandProperty ScriptBlock
+    $Actions.Add($ActionName,$ActionContents)
+}
+
+
 # Get monitor configuration .csv files
 $MonitorConfigFiles = Get-ChildItem $MonitorConfigFilesLocation
 
@@ -475,7 +486,7 @@ Foreach($Result in $Results) {
         #  Previous status was INIT, don't run action
         ##################################################################
         If($PreviousStatus -eq "INIT") { 
-            Write-Host "ACTION TAKEN: None (Previous state INIT)"
+            Write-Host "ACTION TAKEN:`tNone (Previous state INIT)"
             Continue 
         }
 
@@ -483,7 +494,7 @@ Foreach($Result in $Results) {
         #  Previously in maintenance mode, now OK, don't run action
         ##################################################################
         ElseIf($PreviousStatus -eq "MAINT" -and $CurrentStatus -eq "OK") { 
-            Write-Host "ACTION TAKEN: None (Previous Status=MAINT, Current Status=OK)"
+            Write-Host "ACTION TAKEN:`tNone (Previous Status=MAINT, Current Status=OK)"
             Continue 
         }
 
@@ -504,10 +515,10 @@ Foreach($Result in $Results) {
         Write-Host "STATUS UPDATE:`tMonitor=$($Result.Monitor_Name), Target=$($Result.Target), Test=$($Result.Test_Script)"
         Write-Host "STATUS MESSAGE:`t$($Result.Message)"
         If($Result.Action_Script) {
-            Write-Host "ACTION TAKEN: $($Result.Action_Script) (Previous Status=$($PreviousStatus), Current Status=$($CurrentStatus), ALWAYS_INVOKE_ACTION=True)"
+            Write-Host "ACTION TAKEN:`t$($Result.Action_Script) (Previous Status=$($PreviousStatus), Current Status=$($CurrentStatus), ALWAYS_INVOKE_ACTION=True)"
         }
         Else {
-            Write-Host "ACTION TAKEN: None (ALWAYS_INVOKE_ACTION=True but no Action_Script defined)"
+            Write-Host "ACTION TAKEN:`tNone (ALWAYS_INVOKE_ACTION=True but no Action_Script defined)"
         }
     }
 
@@ -517,10 +528,15 @@ Foreach($Result in $Results) {
     ###############################################################################################################################
     If($RunActionScript) {
         If($Result.Action_Script) {
-            Write-Host "ACTION TAKEN: $($Result.Action_Script)"
+            If($Actions[$Result.Action_Script]) {
+                Write-Host "ACTION TAKEN:`t$($Result.Action_Script)"
+            }
+            Else {
+                Write-Host "ACTION TAKEN:`tNone (No Action_Script of $($Result.Action_Script) exists)"
+            }
         }
         Else {
-            Write-Host "ACTION TAKEN: None (No Action_Script defined)"
+            Write-Host "ACTION TAKEN:`tNone (No Action_Script defined)"
         }
     } 
 }
