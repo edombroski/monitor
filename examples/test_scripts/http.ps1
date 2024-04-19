@@ -98,11 +98,7 @@ BEGIN
     $ErrorActionPreference="Stop"
 
     # Dot source functions
-    If($env:_MonScriptPath) {
-        # Implies this was run via wrapper
-        . "$($env:_MonScriptPath)\functions.ps1"
-    }
-    ElseIf($PSScriptRoot) {
+    If($PSScriptRoot) {
         # Implies this was run as standalone
         $ParentDir = (Get-Item $PSScriptRoot).Parent
         $Functions = Join-Path $ParentDir "functions.ps1"
@@ -111,6 +107,11 @@ BEGIN
         # Get test name if run directly
         $TestName = $MyInvocation.MyCommand.Name.Replace(".ps1","").ToUpper()
     }
+    ElseIf($env:_MonScriptPath) {
+        # Implies this was run via wrapper
+        . "$($env:_MonScriptPath)\functions.ps1"
+    }
+
 }
 
 PROCESS
@@ -118,10 +119,14 @@ PROCESS
 
     # If passed the monitor object and previous status is down, reset sleep/max tries and fail quicker
     If($MonitorObject) {
-        If($MonitorObject.PreviousStatus -eq "DOWN") {
+        If($MonitorObject.PreviousStatus -ne "OK") {
             $SleepSeconds = 0
             $MaxTries = 1
         }
+        $TestName = $MonitorObject.Test_Script.ToUpper()
+    }
+    Else {
+        Write-Host "Do NOT have MonitorObject in PROCESS"
     }
 
     # Calculate total seconds for status message
