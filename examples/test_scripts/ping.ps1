@@ -50,12 +50,8 @@ BEGIN
     # Set ErrorActionPreference to stop for Try/Catch
     $ErrorActionPreference="Stop"
 
-    # Dot source functions
-    If($env:_MonScriptPath) {
-        # Implies this was run via wrapper
-        . "$($env:_MonScriptPath)\functions.ps1"
-    }
-    ElseIf($PSScriptRoot) {
+    # Dot source functions and set test name
+    If($PSScriptRoot) {
         # Implies this was run as standalone
         $ParentDir = (Get-Item $PSScriptRoot).Parent
         $Functions = Join-Path $ParentDir "functions.ps1"
@@ -64,6 +60,10 @@ BEGIN
         # Get test name if run directly
         $TestName = $MyInvocation.MyCommand.Name.Replace(".ps1","").ToUpper()
     }
+    ElseIf($env:_MonScriptPath) {
+        # Implies this was run via wrapper
+        . "$($env:_MonScriptPath)\functions.ps1"
+    }
 }
 
 PROCESS
@@ -71,7 +71,7 @@ PROCESS
     # If passed the monitor object and previous status is down, reset sleep/max tries and fail quicker
     # Also set test name since it won't be captured by MyInvocation
     If($MonitorObject) {
-        If($MonitorObject.PreviousStatus -eq "DOWN") {
+        If($MonitorObject.PreviousStatus -ne "OK") {
             $SleepSeconds = 0
             $MaxTries = 1
         }
